@@ -1,0 +1,29 @@
+name: Task
+description: A concrete piece of work from the roadmap.
+title: "[Task] "
+labels: ["task"]
+body:
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      options:
+        - 1 - Game inventory
+        - 2 - APWorld
+        - 3 - Proof of concept
+        - 4 - Client
+        - 5 - Tracker
+    validations:
+      required: true
+  - type: textarea
+    id: todo
+    attributes:
+      label: What needs to be done
+      description: 'A checklist is the best, e.g. "- [ ] Add the Clock Tower regions"'
+    validations:
+      required: true
+  - type: textarea
+    id: depends
+    attributes:
+      label: Depends on
+      description: Other issues that must be done before (#12...)
