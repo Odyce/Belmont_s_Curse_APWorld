@@ -1,0 +1,39 @@
+name: Bug report
+description: Something crashes or doesn't work like it should.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: part
+    attributes:
+      label: Which part?
+      options:
+        - Generation (APWorld)
+        - Client (in game)
+        - Tracker
+        - Documentation
+        - I don't know
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: And what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to reproduce it
+      description: The steps, if you know them.
+  - type: input
+    id: version
+    attributes:
+      label: Versions
+      description: APWorld / client version, game version (Steam build)
+  - type: textarea
+    id: files
+    attributes:
+      label: YAML, logs, spoiler log
+      description: Drag and drop the files here. Screenshots are welcome too.

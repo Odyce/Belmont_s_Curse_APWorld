@@ -1,0 +1,24 @@
+name: Idea / improvement
+description: An option, a design change, anything you'd like to see in the project.
+title: "[Idea] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please read VISION.md (at the root of the repository) before, some things were already decided (but we can still talk about them).
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would it be better?
+  - type: textarea
+    id: how
+    attributes:
+      label: How could it work?
+      description: Optional. Options in the YAML, logic, client side...

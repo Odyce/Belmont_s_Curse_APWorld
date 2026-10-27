@@ -1,0 +1,23 @@
+name: Logic / data error
+description: A wrong requirement, area, item name, vanilla item...
+title: "[Logic] "
+labels: ["logic"]
+body:
+  - type: input
+    id: location
+    attributes:
+      label: Location or item
+      description: 'The exact name, as in the spreadsheet (e.g. "PS - Sewer Reservoir : Gold Chest")'
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What is wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: right
+    attributes:
+      label: What should it be?
+      description: How did you check it? (in game, video, save file...)

@@ -1,12 +1,18 @@
-Please format your title with what portion of the project this pull request is
-targeting and what it's changing.
-
-ex. "MyGame4: implement new game" or "Docs: add new guide for customizing MyGame3"
-
-## What is this fixing or adding?
+## What does this change?
 
 
-## How was this tested?
+## Linked issue
 
+Closes #
 
-## If this makes graphical changes, please attach screenshots.
+## How was it tested?
+
+- [ ] At least one seed generated with a test YAML
+- [ ] `AP_TEST_WORLDS=cvbc pytest` passes
+- [ ] Tested in game (if it touches the client)
+
+## Checklist
+
+- [ ] No AP ID was changed
+- [ ] The spreadsheet is updated if names, IDs or rules changed
+- [ ] Jeanne d'Arc and Aliénor d'Aquitaine are still in French
