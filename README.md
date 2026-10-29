@@ -28,7 +28,7 @@ The detailed version (logic, options, design choices) is in [VISION.md](VISION.m
 - [x] Inventory spreadsheet: 412 items for 412 locations, 8 categories
 - [x] Boss rooms, endings, progressive weapon groups, status effects
 - [x] Region graph and access rules
-- [ ] Names for the 44 Work of Mercy checks
+- [x] Names for the 43 Work of Mercy checks
 - [ ] List every enemy and their locations
 - [ ] Last in-game verifications (a few chests and clues to confirm)
 

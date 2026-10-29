@@ -35,6 +35,7 @@
 *.BIN
 *.puml
 
+worlds/cvbc/wip
 setups
 build
 bundle/components.wxs
