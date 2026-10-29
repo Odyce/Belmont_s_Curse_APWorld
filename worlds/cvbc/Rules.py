@@ -1,62 +1,30 @@
-from BaseClasses import Region
-from .Types import APSkeletonLocation
-from .Locations import location_table, is_valid_location
+from worlds.generic.Rules import add_rule
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from . import APSkeletonWorld
 
-# This is where you will create your imaginary game world
-# IE: connect rooms and areas together
-# This is NOT where you'll add requirements for how to get to certain locations thats in Rules.py
-# This is also long and tediouos
-def create_regions(world: "APSkeletonWorld"):
-    # The functions that are being used here will be located at the bottom to view
-    # The important part is that if its not a dead end and connects to another place then name it
-    # Otherwise you can just create the connection. Not that naming it is bad
+# This is the last big thing to do (at least for me)
+# This is where you add item
+# These are omega simplified rules
+# There are a ton of different ways you can add rules from amoount of items you need to optional items
+# Theres also difficulty options and a bunch others
+# Id suggest going through a bunch of different ap worlds and seeing how they do the rules
+# Even better if its a game you know a lot about and can tell what you need to get to certain locations
+def set_rules(world: "APSkeletonWorld"):
+    player = world.player
+    options = world.options
 
-    # You can technically name your connections whatever you want as well
-    # You'll use those connection names in Rules.py
-    menu = create_region(world, "Menu")
-    greenhillzone = create_region_and_connect(world, "Green Hill Zone", "Menu -> Green Hill Zone", menu)
-    romania = create_region_and_connect(world, "Romania", "Menu -> Romania", menu)
-    sewer = create_region_and_connect(world, "The Sewer", "Menu -> The Sewer", menu)
-
-    # ---------------------------------- Green Hill Zone ----------------------------------
-    greenhillzone1 = create_region_and_connect(world, "Green Hill Zone - Act 1", "Green Hill Zone -> Green Hill Zone - Act 1", greenhillzone)
-    greenhillzone2 = create_region_and_connect(world, "Green Hill Zone - Act 2", "Green Hill Zone - Act 1 -> Green Hill Zone - Act 2", greenhillzone1)
-    create_region_and_connect(world, "Green Hill Zone - Act 3", "Green Hill Zone - Act 2 -> Green Hill Zone - Act 3", greenhillzone2)
-
-    # ---------------------------------- Romania ------------------------------------------
-    bucharest = create_region_and_connect(world, "Bucharest", "Romania -> Bucharest", romania)
-    sibiu = create_region_and_connect(world, "Sibiu", "Romania -> Sibiu", romania)
-    brașov = create_region_and_connect(world, "Brașov", "Romania -> Brașov", romania)
-    bucharest.connect(sibiu, "Bucharest -> Sibiu")
-    sibiu.connect(brașov, "Sibiu -> Brașov")
-    brașov.connect(bucharest, "Brașov, Bucharest")
-
-    # ---------------------------------- The Sewer ----------------------------------------
-    create_region_and_connect(world, "Big Hole in the Floor", "The Sewer -> Big Hole in the Floor", sewer)
-
-def create_region(world: "APSkeletonWorld", name: str) -> Region:
-    reg = Region(name, world.player, world.multiworld)
-
-    # When we create the region we go through all the locations we made and check if they are in that region
-    # If they are and are valid, we attach it to the region
-    for (key, data) in location_table.items():
-        if data.region == name:
-            if not is_valid_location(world, key):
-                continue
-            location = APSkeletonLocation(world.player, key, data.ap_code, reg)
-            reg.locations.append(location)
+    # Chapter Access
+    add_rule(world.multiworld.get_entrance("Menu -> Green Hill Zone", player),
+             lambda state: state.has("Green Hill Zone", player))
+    add_rule(world.multiworld.get_entrance("Menu -> Romania", player),
+             lambda state: state.has("Romania", player))
+    add_rule(world.multiworld.get_entrance("Menu -> The Sewer", player),
+             lambda state: state.has("The Sewer", player))
     
-    world.multiworld.regions.append(reg)
-    return reg
-
-# This runs the create region function while also connecting to another region
-# Just simplifies process since you woill be connecting a lot of regions
-def create_region_and_connect(world: "APSkeletonWorld",
-                               name: str, entrancename: str, connected_region: Region) -> Region:
-    reg: Region = create_region(world, name)
-    connected_region.connect(reg, entrancename)
-    return reg
+    add_rule(world.multiworld.get_entrance("The Sewer -> Big Hole in the Floor", player),
+             lambda state: state.has("A cute rat") and state.has("Estrogen") and state.has("Testosterone"))
+    
+    # Victory condition rule!
+    world.multiworld.completion_condition[player] = lambda state: state.has("Victory", player)

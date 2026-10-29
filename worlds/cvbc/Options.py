@@ -1,90 +1,78 @@
-# Look at init or Items.py for more information on imports
-from typing import Dict, TYPE_CHECKING
-import logging
+from typing import List, Dict, Any
+from dataclasses import dataclass
+from worlds.AutoWorld import PerGameCommonOptions
+from Options import Choice, OptionGroup, Toggle, Range
 
-from .Types import LocData
+# If youve ever gone to an options page and seen how sometimes options are grouped
+# This is that
+def create_option_groups() -> List[OptionGroup]:
+    option_group_list: List[OptionGroup] = []
+    for name, options in ap_skeleton_option_groups.items():
+        option_group_list.append(OptionGroup(name=name, options=options))
 
-if TYPE_CHECKING:
-    from . import APSkeletonWorld
+    return option_group_list
 
-# This is technique in programming to make things more readable for booleans
-# A boolean is true or false
-def did_include_extra_locations(world: "APSkeletonWorld") -> bool:
-    return bool(world.options.ExtraLocations)
+class StartingChapter(Choice):
+    """
+    Determines which chapter you'll start with.
+    When you grab choice you'll get the associated number.
+    IE: If the player chooses the sewer then when you go to call StartingChapter you'll get 3
+    When displaying the options names on the site, _ will become spaces and the word option will go away.
+    """
+    display_name = "Starting Chapter"
+    option_green_hill_zone = 1
+    option_romania = 2
+    option_the_sewer = 3
+    default = 1
 
-# This is used by ap and in Items.py
-# Theres a multitude of reasons to need to grab how many locations there are
-def get_total_locations(world: "APSkeletonWorld") -> int:
-    # This is the total that we'll keep updating as we count how many locations there are
-    total = 0
-    for name in location_table:
-        # If we did not turn on extra locations (see how readable it is with that thing from the top)
-        # AND the name of it is found in our extra locations table, then that means we dont want to count it
-        # So continue moves onto the next name in the table
-        if not did_include_extra_locations(world) and name in extra_locations:
-            continue
+class ExtraLocations(Toggle):
+    """
+    This will enable the extra locations option. Toggle is just true or false.
+    """
+    display_name = "Add Extra Locations"
 
-        # If the location is valid though, count it
-        if is_valid_location(world, name):
-            total += 1
+class TrapChance(Range):
+    """
+    Determines the chance for any junk item to become a trap.
+    Set it to 0 for no traps.
+    Range is in fact a range. You can set the limits and its default.
+    """
+    display_name = "Trap Chance"
+    range_start = 0
+    range_end = 100
+    default = 0
 
-    return total
+class ForcefemTrapWeight(Range):
+    """
+    The weight of forcefem traps in the trap pool.
+    Does really cool stuff to your body.
+    """
+    display_name = "Forcefem Trap Weight"
+    range_start = 0
+    range_end = 100
+    default = 100
 
-def get_location_names() -> Dict[str, int]:
-    # This is just a fancy way of getting all the names and data in the location table and making a dictionary thats {name, code}
-    # If you have dynamic locations then you want to add them to the dictionary as well
-    names = {name: data.ap_code for name, data in location_table.items()}
+class SpeedChangeTrapWeight(Range):
+    """
+    The weight of speed change traps in the trap pool.
+    Speed change traps change the game speed for x seconds.
+    """
+    display_name = "Speed Change Trap Weight"
+    range_start = 0
+    range_end = 100
+    default = 25
 
-    return names
+@dataclass
+class APSkeletonOptions(PerGameCommonOptions):
+    StartingChapter:            StartingChapter
+    ExtraLocations:             ExtraLocations
+    TrapChance:                 TrapChance
+    ForcefemTrapWeight:         ForcefemTrapWeight
+    SpeedChangeTrapWeight:      SpeedChangeTrapWeight
 
-# The check to make sure the location is valid
-# I know it looks like the same as when we counted it but thats because this is an example
-# Things get complicated fast so having a back up is nice
-def is_valid_location(world: "APSkeletonWorld", name) -> bool:
-    if not did_include_extra_locations(world) and name in extra_locations:
-        return False
-    
-    return True
-
-# You might need more functions as well so be liberal with them
-# My advice, if you are about to type the same thing in a second time, turn it into a function
-# Even if you only do it once you can turn it into a function too for organization
-
-# Heres where you do the next fun part of listing out all those locations
-# Its a lot
-# My advice, zone out for half an hour listening to music and hope you wake up to a completed list
-ap_skeleton_locations = {
-    # You can take a peak at Types.py for more information but,
-    # LocData is code, region in this instance
-    # Regions will be explained more in Regions.py
-    # But just know that it's mostly about organization
-    # Place locations together based on where they are in the game and what is needed to get there
-    "A Fake Location Name": LocData(20050100, "Bucharest"),
-    "A really good restaurant": LocData(20050101, "Brașov"),
-    "Nuketown": LocData(20050103, "Green Hill Zone - Act 1"),
-    "Nuketown 2": LocData(20050104, "Green Hill Zone - Act 1"),
-    "Talk to Sonic": LocData(20050105, "Green Hill Zone - Act 2"),
-    "Talk to Captain Price": LocData(20050106, "Green Hill Zone - Act 3"),
-    "TMNT Hangout Spot": LocData(20050107, "The Sewer"),
-    "Above TMNT Hangout Spot": LocData(20050108, "The Sewer"),
-    "Coughing Baby Pickup": LocData(20050109, "The Sewer"),    
-}
-
-extra_locations = {
-    "ml7's house": LocData(20050102, "Sibiu"),
-}
-
-# Like in Items.py, breaking up the different locations to help with organization and if something special needs to happen to them
-event_locations = {
-    "Beat Final Boss": LocData(20050110, "Big Hole in the Floor")
-}
-
-# Also like in Items.py, this collects all the dictionaries together
-# Its important to note that locations MUST be bigger than progressive item count and should be bigger than total item count
-# Its not here because this is an example and im not funny enough to think of more locations
-# But important to note
-location_table = {
-    **ap_skeleton_locations,
-    **extra_locations,
-    **event_locations
+# This is where you organize your options
+# Its entirely up to you how you want to organize it
+ap_skeleton_option_groups: Dict[str, List[Any]] = {
+    "General Options": [StartingChapter, ExtraLocations],
+    "Trap Options": [TrapChance, ForcefemTrapWeight, SpeedChangeTrapWeight]
 }
