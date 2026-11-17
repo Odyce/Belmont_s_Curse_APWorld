@@ -34,8 +34,8 @@ The detailed version (logic, options, design choices) is in [VISION.md](VISION.m
 
 **Phase 2 - APWorld (Python)**
 - [x] Fork set up, world folder created from APSkeleton
-- [ ] Items, Locations, Regions, Rules, Options
-- [ ] Test YAMLs and unit tests (every goal reachable, no locked seed)
+- [x] Items, Locations, Regions, Rules, Options
+- [ ] Unit tests (every goal reachable, no locked seed) and documentation (postponed for now)
 
 **Phase 3 - Game side proof of concept**
 - [ ] BepInEx 6 (IL2CPP) + UnityExplorer setup

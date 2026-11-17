@@ -1,4 +1,6 @@
-# Your game here!
+# ***THIS DOCUMENT IS A WORK IN PROGRESS, DO NOT FOLLOW IT YET***
+
+# Castlevania: Belmont's Curse
 
 ## Required Software
 

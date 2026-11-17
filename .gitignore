@@ -36,6 +36,7 @@
 *.puml
 
 worlds/cvbc/wip
+tools/tmp
 setups
 build
 bundle/components.wxs
