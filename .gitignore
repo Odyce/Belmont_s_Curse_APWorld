@@ -37,6 +37,9 @@
 
 worlds/cvbc/wip
 tools/tmp
+client/**/bin
+client/**/obj
+client/**/GameDir.props
 setups
 build
 bundle/components.wxs

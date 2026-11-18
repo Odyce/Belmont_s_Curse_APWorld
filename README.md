@@ -12,6 +12,12 @@ Actually the project is at a very early stage. Nothing is playable for now, so p
 
 Logo made by **AureOre** from the Discord, thanks a lot to her!
 
+And while I'm thanking people, I'd like to thank both LanaHikari (Lanahi on Discord) and Keldroth,for their contributions.
+Thanks to Keldroth's vide-coded prototype and Lanahi sorting of it on the github below, I saved a lot of time by just checking info instead of searching them
+
+[BelmontsCurseInformationMarkdowns](https://github.com/LanaHIki/BelmontsCurseInformationMarkdowns)
+
+
 ## The vision, in short
 
 - Every item category of the game (Relics, Weapons, Clues, Tarot Cards, Augmentations, Work of Mercy upgrades, Key Items & Skills, EXP Statues) can be shuffled or kept vanilla, category by category, from the YAML.
@@ -38,9 +44,9 @@ The detailed version (logic, options, design choices) is in [VISION.md](VISION.m
 - [ ] Unit tests (every goal reachable, no locked seed) and documentation (postponed for now)
 
 **Phase 3 - Game side proof of concept**
-- [ ] BepInEx 6 (IL2CPP) + UnityExplorer setup
-- [ ] Find pickups, inventory, save and event flags in the game
-- [ ] Minimal plugin: detect a pickup, block the vanilla item, give another one
+- [x] BepInEx 6 (IL2CPP) + UnityExplorer setup
+- [x] Find pickups, inventory, save and event flags in the game
+- [x] Minimal plugin: detect a pickup, block the vanilla item, give another one
 
 **Phase 4 - Client (BepInEx plugin, C#)**
 - [ ] Connection, send checks, receive items, save the received items
