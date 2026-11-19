@@ -2,33 +2,11 @@
 from typing import Dict, TYPE_CHECKING
 import logging
 
-from .Types import LocData
+from .Types import LocationData, EndingData, C_BC_Category
 
 if TYPE_CHECKING:
-    from . import APSkeletonWorld
+    from . import CBCWorld
 
-# This is technique in programming to make things more readable for booleans
-# A boolean is true or false
-def did_include_extra_locations(world: "APSkeletonWorld") -> bool:
-    return bool(world.options.ExtraLocations)
-
-# This is used by ap and in Items.py
-# Theres a multitude of reasons to need to grab how many locations there are
-def get_total_locations(world: "APSkeletonWorld") -> int:
-    # This is the total that we'll keep updating as we count how many locations there are
-    total = 0
-    for name in location_table:
-        # If we did not turn on extra locations (see how readable it is with that thing from the top)
-        # AND the name of it is found in our extra locations table, then that means we dont want to count it
-        # So continue moves onto the next name in the table
-        if not did_include_extra_locations(world) and name in extra_locations:
-            continue
-
-        # If the location is valid though, count it
-        if is_valid_location(world, name):
-            total += 1
-
-    return total
 
 def get_location_names() -> Dict[str, int]:
     # This is just a fancy way of getting all the names and data in the location table and making a dictionary thats {name, code}
@@ -37,14 +15,18 @@ def get_location_names() -> Dict[str, int]:
 
     return names
 
-# The check to make sure the location is valid
-# I know it looks like the same as when we counted it but thats because this is an example
-# Things get complicated fast so having a back up is nice
-def is_valid_location(world: "APSkeletonWorld", name) -> bool:
-    if not did_include_extra_locations(world) and name in extra_locations:
-        return False
+## I copied the above function, just made it to subdivide the Dictionnnary according to the game's regions
+
+def get_locations_from_region(reg: str) -> Dict[str, int]:
+    res_dict = {}
+    for name, data in location_table.items():
+        if data.region == reg:
+            res_dict[name] = data.ap_code
     
-    return True
+    return res_dict
+
+def get_location_id(loc: str) -> int:
+    return location_table[loc].ap_code
 
 # You might need more functions as well so be liberal with them
 # My advice, if you are about to type the same thing in a second time, turn it into a function
@@ -53,38 +35,440 @@ def is_valid_location(world: "APSkeletonWorld", name) -> bool:
 # Heres where you do the next fun part of listing out all those locations
 # Its a lot
 # My advice, zone out for half an hour listening to music and hope you wake up to a completed list
-ap_skeleton_locations = {
-    # You can take a peak at Types.py for more information but,
-    # LocData is code, region in this instance
-    # Regions will be explained more in Regions.py
-    # But just know that it's mostly about organization
-    # Place locations together based on where they are in the game and what is needed to get there
-    "A Fake Location Name": LocData(20050100, "Bucharest"),
-    "A really good restaurant": LocData(20050101, "Brașov"),
-    "Nuketown": LocData(20050103, "Green Hill Zone - Act 1"),
-    "Nuketown 2": LocData(20050104, "Green Hill Zone - Act 1"),
-    "Talk to Sonic": LocData(20050105, "Green Hill Zone - Act 2"),
-    "Talk to Captain Price": LocData(20050106, "Green Hill Zone - Act 3"),
-    "TMNT Hangout Spot": LocData(20050107, "The Sewer"),
-    "Above TMNT Hangout Spot": LocData(20050108, "The Sewer"),
-    "Coughing Baby Pickup": LocData(20050109, "The Sewer"),    
+
+## My advice is to make a script that automates it from a slowly but surely built spreadsheet
+## Much more reliable in my opinion
+
+ending_table: Dict[str, EndingData] = {
+    "Bad Ending": EndingData("Bad Ending", "Master's Quarter (Bad Ending)"),
+    "Neutral Ending": EndingData("Neutral Ending", "Master's Quarter"),
+    "True Ending": EndingData("True Ending", "Master's Quarter"),
 }
 
-extra_locations = {
-    "ml7's house": LocData(20050102, "Sibiu"),
-}
-
-# Like in Items.py, breaking up the different locations to help with organization and if something special needs to happen to them
-event_locations = {
-    "Beat Final Boss": LocData(20050110, "Big Hole in the Floor")
-}
-
-# Also like in Items.py, this collects all the dictionaries together
-# Its important to note that locations MUST be bigger than progressive item count and should be bigger than total item count
-# Its not here because this is an example and im not funny enough to think of more locations
-# But important to note
-location_table = {
-    **ap_skeleton_locations,
-    **extra_locations,
-    **event_locations
+location_table: Dict[str, LocationData] = {
+    # Catacombs of Paris
+    'CoP - Throat of Hell : Silver Chest': LocationData(7101011, 'Catacombs of Paris', 'Ebony Claw', C_BC_Category.RELIC, 'Arcane Whip AND Holy Light AND Smash'),
+    'CoP - Antechamber of Sin : Silver Chest': LocationData(7101013, 'Catacombs of Paris', 'Forsaken Ring', C_BC_Category.RELIC, 'Smash AND Aerial Rush AND Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    'CoP - Path of the Abyss : Silver Chest': LocationData(7101023, 'Catacombs of Paris', 'Mourning Bead', C_BC_Category.RELIC, 'Arcane Whip AND Holy Light'),
+    'CoP - Jaws of Limbo : Silver Chest': LocationData(7101024, 'Catacombs of Paris', 'Necro Charm', C_BC_Category.RELIC, 'Arcane Whip AND Holy Light'),
+    'CoP - Catacomb Entrance : Silver Chest': LocationData(7101035, 'Catacombs of Paris', "Specter's Whisper", C_BC_Category.RELIC, 'Nothing extra'),
+    'CoP - Hall of the Fallen Angels : Gold Chest': LocationData(7102001, 'Catacombs of Paris', 'Whip', C_BC_Category.WEAPON, 'Arcane Whip AND Holy Light'),
+    'CoP - Crossroads of the Dead : Gold Chest': LocationData(7102013, 'Catacombs of Paris', 'Pair of Longswords', C_BC_Category.WEAPON, 'Arcane Whip AND Holy Light'),
+    'CoP - Collapsed Path of Orpheus : Gold Chest': LocationData(7102019, 'Catacombs of Paris', 'Gungnir', C_BC_Category.WEAPON, 'Arcane Whip AND Holy Light AND Smash'),
+    'CoP - Charnel Galleries : Ghost': LocationData(7103022, 'Catacombs of Paris', 'The Shadow First Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'CoP - Circle of Greed : Note': LocationData(7103031, 'Catacombs of Paris', 'The Miser Fourth Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'CoP - Blood Pits : Brave Heart Fragment': LocationData(7105007, 'Catacombs of Paris', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip AND Holy Light'),
+    'CoP - Catacomb Entrance : Brave Heart Fragment': LocationData(7105008, 'Catacombs of Paris', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip AND Holy Light'),
+    'CoP - Circle of Greed : Brave Heart Fragment': LocationData(7105009, 'Catacombs of Paris', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Arcane Whip'),
+    'CoP - Chamber of Whispers : Wise Heart Fragment': LocationData(7105031, 'Catacombs of Paris', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip AND Holy Light'),
+    'CoP - Hall of the Fallen Angels : Wise Heart Fragment': LocationData(7105032, 'Catacombs of Paris', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    'CoP - Throat of Hell : Wise Heart Fragment': LocationData(7105033, 'Catacombs of Paris', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip AND Holy Light AND Smash'),
+    'CoP - Altar of Bones : Death Defeated': LocationData(7107015, 'Catacombs of Paris', 'The Shadow Confronted', C_BC_Category.KIS, 'Nothing extra'),
+    'CoP - Circle of Greed : Mammon Altar': LocationData(7107017, 'Catacombs of Paris', 'Oozing Eye', C_BC_Category.KIS, 'Aerial Rush AND Arcane Whip'),
+    'CoP - Antechamber of Sin : EXP Statue 1': LocationData(7108045, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Smash AND Aerial Rush AND Arcane Whip'),
+    'CoP - Antechamber of Sin : EXP Statue 2': LocationData(7108046, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Smash AND Aerial Rush AND Arcane Whip'),
+    'CoP - Blood Pits : EXP Statue 1': LocationData(7108047, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'CoP - Blood Pits : EXP Statue 2': LocationData(7108048, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'CoP - Catacomb Entrance : EXP Statue 2': LocationData(7108049, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'CoP - Catacomb Entrance : EXP Statue 3': LocationData(7108050, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'CoP - Chamber of Whispers : EXP Statue': LocationData(7108051, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'CoP - Charnel Galleries : EXP Statue': LocationData(7108052, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'CoP - Collapsed Path of Orpheus : EXP Statue 1': LocationData(7108053, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'CoP - Collapsed Path of Orpheus : EXP Statue 2': LocationData(7108054, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light AND Smash'),
+    'CoP - Collapsed Path of Orpheus : EXP Statue 3': LocationData(7108055, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light AND Smash'),
+    'CoP - Collapsed Path of Orpheus : EXP Statue 4': LocationData(7108056, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'CoP - Gallery of Teeth : EXP Statue 1': LocationData(7108057, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'CoP - Gallery of Teeth : EXP Statue 2': LocationData(7108058, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'CoP - Jaws of Limbo : EXP Statue': LocationData(7108059, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'CoP - Path of the Abyss : EXP Statue': LocationData(7108060, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'CoP - Realm of Old Night : EXP Statue 1': LocationData(7108061, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'CoP - Realm of Old Night : EXP Statue 2': LocationData(7108062, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'CoP - Realm of Old Night : EXP Statue 3': LocationData(7108063, 'Catacombs of Paris', 'Experience Statue 200', C_BC_Category.EXPS, 'Nothing extra'),
+    # Catacombs of Paris (Entrance)
+    'CoP - Catacomb Entrance : EXP Statue 1': LocationData(7108044, 'Catacombs of Paris (Entrance)', 'Experience Statue 200', C_BC_Category.EXPS, 'Nothing extra'),
+    # Clock Tower
+    'CT - West Daedalus Crossing : Silver Chest': LocationData(7101018, 'Clock Tower', 'Hollow Bone', C_BC_Category.RELIC, 'Tarot : The Zealot'),
+    'CT - Path of the Builder : Silver Chest': LocationData(7101022, 'Clock Tower', 'Moonlit Shard', C_BC_Category.RELIC, 'Double Jump'),
+    'CT - Western Ascent : Silver Chest': LocationData(7101028, 'Clock Tower', 'Phantom Ring', C_BC_Category.RELIC, 'Smash'),
+    'CT - Eastern Access Shaft : Silver Chest': LocationData(7101033, 'Clock Tower', 'Sinister Rune', C_BC_Category.RELIC, 'Nothing extra'),
+    'CT - East Daedalus Crossing : Silver Chest': LocationData(7101038, 'Clock Tower', 'Vile Trinket', C_BC_Category.RELIC, 'Smash'),
+    'CT - The Way of the Fist : Gold Chest': LocationData(7102010, 'Clock Tower', 'Claymore', C_BC_Category.WEAPON, 'Arcane Whip AND Holy Light'),
+    "CT - Mechanic's Ascent : Gold Chest": LocationData(7102018, 'Clock Tower', 'Halberd', C_BC_Category.WEAPON, 'Nothing extra'),
+    "CT - Builder's Bureau : Unique Reward": LocationData(7102023, 'Clock Tower', 'Fists of Talos', C_BC_Category.WEAPON, 'Nothing extra'),
+    'CT - Daedalus Crossing : Note': LocationData(7103012, 'Clock Tower', 'The Builder Second Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    "CT - Mechanic's Ascent : Spy Statue": LocationData(7103033, 'Clock Tower', 'The Zealot Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    "CT - Builder's Bureau : Note": LocationData(7103039, 'Clock Tower', 'The Sage Third Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'CT - Throne of the Builder : Talos Absorbed - Tarot': LocationData(7104006, 'Clock Tower', 'Tarot : The Builder', C_BC_Category.TAROT, 'Nothing extra'),
+    'CT - Eastern Steps : Brave Heart Fragment': LocationData(7105022, 'Clock Tower', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip AND Holy Light'),
+    'CT - Serpent Pinion : Brave Heart Fragment': LocationData(7105023, 'Clock Tower', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'CT - Central Fuel Reservoir : Wise Heart Fragment': LocationData(7105046, 'Clock Tower', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Double Jump'),
+    'CT - Upper Gallery : Wise Heart Fragment': LocationData(7105047, 'Clock Tower', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'CT - West Tower Base : Wise Heart Fragment': LocationData(7105048, 'Clock Tower', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'CT - Counterweight Chamber : ATK Book': LocationData(7105062, 'Clock Tower', 'ATK Book', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'CT - Daedalus Crossing : DEF Book': LocationData(7105075, 'Clock Tower', 'DEF Book', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'CT - Throne of the Builder : Talos Absorbed - Skill': LocationData(7107009, 'Clock Tower', 'Smash', C_BC_Category.KIS, 'Nothing extra'),
+    'CT - Daedalus Crossing : EXP Statue 1': LocationData(7108134, 'Clock Tower', 'Experience Statue 350', C_BC_Category.EXPS, 'Nothing extra'),
+    'CT - Daedalus Crossing : EXP Statue 2': LocationData(7108135, 'Clock Tower', 'Experience Statue 350', C_BC_Category.EXPS, 'Double Jump'),
+    'CT - Daedalus Crossing : EXP Statue 3': LocationData(7108136, 'Clock Tower', 'Experience Statue 350', C_BC_Category.EXPS, 'Nothing extra'),
+    'CT - Eastern Access Shaft : EXP Statue 1': LocationData(7108137, 'Clock Tower', 'Experience Statue 350', C_BC_Category.EXPS, 'Nothing extra'),
+    'CT - Eastern Access Shaft : EXP Statue 2': LocationData(7108138, 'Clock Tower', 'Experience Statue 350', C_BC_Category.EXPS, 'Nothing extra'),
+    'CT - Eastern Access Shaft : EXP Statue 3': LocationData(7108139, 'Clock Tower', 'Experience Statue 350', C_BC_Category.EXPS, 'Nothing extra'),
+    'CT - Eastern Access Shaft : EXP Statue 4': LocationData(7108140, 'Clock Tower', 'Experience Statue 350', C_BC_Category.EXPS, 'Nothing extra'),
+    'CT - Eastern Access Shaft : EXP Statue 5': LocationData(7108141, 'Clock Tower', 'Experience Statue 350', C_BC_Category.EXPS, 'Nothing extra'),
+    "CT - Mechanic's Ascent : EXP Statue": LocationData(7108142, 'Clock Tower', 'Experience Statue 350', C_BC_Category.EXPS, 'Nothing extra'),
+    'CT - Path of the Builder : EXP Statue': LocationData(7108143, 'Clock Tower', 'Experience Statue 350', C_BC_Category.EXPS, 'Nothing extra'),
+    'CT - Serpent Pinion : EXP Statue': LocationData(7108144, 'Clock Tower', 'Experience Statue 350', C_BC_Category.EXPS, 'Aerial Rush'),
+    # Clock Tower (Upper)
+    'CT - Heart of the Clock : Isaac Defeated': LocationData(7102020, 'Clock Tower (Upper)', 'Chauve-Souris', C_BC_Category.WEAPON, 'Nothing extra'),
+    'CT - Heart of the Clock : Isaac Absorbed': LocationData(7104012, 'Clock Tower (Upper)', 'Tarot : The Zealot', C_BC_Category.TAROT, 'Nothing extra'),
+    'CT - The Gauntlet : Brave Heart Fragment': LocationData(7105024, 'Clock Tower (Upper)', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'CT - Eastern Summit : DEF Book': LocationData(7105076, 'Clock Tower (Upper)', 'DEF Book', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    "CT - Clock Keeper's Atrium : EXP Statue": LocationData(7108145, 'Clock Tower (Upper)', 'Experience Statue 350', C_BC_Category.EXPS, 'Smash'),
+    'CT - Eastern Summit : EXP Statue 1': LocationData(7108146, 'Clock Tower (Upper)', 'Experience Statue 350', C_BC_Category.EXPS, 'Nothing extra'),
+    'CT - Eastern Summit : EXP Statue 2': LocationData(7108147, 'Clock Tower (Upper)', 'Experience Statue 350', C_BC_Category.EXPS, 'Nothing extra'),
+    # Ferryman's Wharf
+    "Ferryman's Wharf : Ferryman's Gift Absorbed": LocationData(7104011, "Ferryman's Wharf", 'Tarot : The Whisperer', C_BC_Category.TAROT, "Ferryman's Obol"),
+    # Hall of Mirrors
+    'HoM - Dead-end Tower : Silver Chest': LocationData(7101007, 'Hall of Mirrors', 'Crystallized Blood', C_BC_Category.RELIC, 'Nothing extra'),
+    'HoM - Delived Level : Silver Chest': LocationData(7101010, 'Hall of Mirrors', 'Dusk Amulet', C_BC_Category.RELIC, 'Smash'),
+    'HoM - Steps of Misdirection : Silver Chest': LocationData(7101017, 'Hall of Mirrors', 'Haunting Relic', C_BC_Category.RELIC, 'Nothing extra'),
+    "HoM - Servant's Refectory : Silver Chest": LocationData(7101031, 'Hall of Mirrors', 'Sand Charm', C_BC_Category.RELIC, 'Nothing extra'),
+    'HoM - Level Deviled : Unique Reward': LocationData(7102024, 'Hall of Mirrors', "Bernhard's Wrath", C_BC_Category.WEAPON, 'Nothing extra'),
+    'HoM - Glass Gallery : Spy Statue': LocationData(7103034, 'Hall of Mirrors', 'The Temptress Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'HoM - Heart of the Maze : Note': LocationData(7103037, 'Hall of Mirrors', 'The Sage First Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'HoM - Looping Hallways : Spy Statue': LocationData(7103038, 'Hall of Mirrors', 'The Sage Second Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'HoM - Steps of Misdirection : Spy Statue': LocationData(7103040, 'Hall of Mirrors', 'The Sage Fourth Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'HoM - Belmont Manor : Succubus Absorbed': LocationData(7104013, 'Hall of Mirrors', 'Tarot : The Temptress', C_BC_Category.TAROT, 'Nothing extra'),
+    'HoM - Looping Hallways : Brave Heart Fragment': LocationData(7105019, 'Hall of Mirrors', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'HoM - Nightmare Atrium : Brave Heart Fragment': LocationData(7105020, 'Hall of Mirrors', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Smash'),
+    'HoM - Steps of Misdirection : Brave Heart Fragment': LocationData(7105021, 'Hall of Mirrors', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'HoM - Ballroom of Terror : Wise Heart Fragment': LocationData(7105043, 'Hall of Mirrors', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'HoM - Boudoir of Bewilderment : Wise Heart Fragment': LocationData(7105044, 'Hall of Mirrors', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'HoM - Chamber of  Secrecy : Wise Heart Fragment': LocationData(7105045, 'Hall of Mirrors', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'HoM - Ballroom of Terror : ATK Book': LocationData(7105060, 'Hall of Mirrors', 'ATK Book', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'HoM - Looping Hallways : ATK Book': LocationData(7105061, 'Hall of Mirrors', 'ATK Book', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'HoM - Corridor of Déjà Vu : DEF Book': LocationData(7105073, 'Hall of Mirrors', 'DEF Book', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'HoM - Passage of Perplexity : DEF Book': LocationData(7105074, 'Hall of Mirrors', 'DEF Book', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'HoM - Boudoir of Bewilderment : EXP Statue': LocationData(7108113, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Dead-end Tower : EXP Statue': LocationData(7108114, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Familiar Way : EXP Statue': LocationData(7108115, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Gallery of Glass : EXP Statue': LocationData(7108116, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Smash'),
+    'HoM - Level Deviled : EXP Statue': LocationData(7108117, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Looping Hallways : EXP Statue 1': LocationData(7108118, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Looping Hallways : EXP Statue 2': LocationData(7108119, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Nightmare Atrium : EXP Statue': LocationData(7108120, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Smash'),
+    'HoM - Passage of Perplexity : EXP Statue': LocationData(7108121, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    "HoM - Servants' Refectory : EXP Statue": LocationData(7108122, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Steps of Misdirection : EXP Statue 1': LocationData(7108123, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Steps of Misdirection : EXP Statue 2': LocationData(7108124, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Threshold of Vision : EXP Statue': LocationData(7108125, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Tower of Worldly Reflection : EXP Statue 1': LocationData(7108126, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Tower of Worldly Reflection : EXP Statue 2': LocationData(7108127, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Tower of Worldly Reflection : EXP Statue 3': LocationData(7108128, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Tower of Worldly Reflection : EXP Statue 4': LocationData(7108129, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Tower of Worldly Reflection : EXP Statue 5': LocationData(7108130, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Tower of Worldly Reflection : EXP Statue 6': LocationData(7108131, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Tower of Worldly Reflection : EXP Statue 7': LocationData(7108132, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'HoM - Tower of Worldly Reflection : EXP Statue 8': LocationData(7108133, 'Hall of Mirrors', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    # Holy Innocents' Cemetery
+    'HIC - Cemetery Entrance : Silver Chest': LocationData(7101001, "Holy Innocents' Cemetery", 'Abyssal Eye', C_BC_Category.RELIC, 'Arcane Whip AND Holy Light'),
+    'HIC - Pillaged Tombs : Silver Chest': LocationData(7101025, "Holy Innocents' Cemetery", 'Nightshade', C_BC_Category.RELIC, 'Arcane Whip'),
+    'HIC - Hot Springs : Silver Chest': LocationData(7101027, "Holy Innocents' Cemetery", 'Pale Thorn', C_BC_Category.RELIC, '(Arcane Whip AND Double Jump AND Holy Light) OR (Aerial Rush AND Arcane Whip AND Holy Light)'),
+    'HIC - Mass Grave : Silver Chest': LocationData(7101029, "Holy Innocents' Cemetery", "Raven's Feather", C_BC_Category.RELIC, 'Arcane Whip'),
+    'HIC - Fountain of the Innocents : Silver Chest': LocationData(7101037, "Holy Innocents' Cemetery", 'Vampire Fang', C_BC_Category.RELIC, 'Arcane Whip'),
+    'HIC - Flooded Crypt : Gold Chest': LocationData(7102015, "Holy Innocents' Cemetery", 'Almace and Hauteclaire', C_BC_Category.WEAPON, 'Arcane Whip AND Smash'),
+    'HIC - Fountain of the Innocents : Gold Chest': LocationData(7102017, "Holy Innocents' Cemetery", 'Lance', C_BC_Category.WEAPON, 'Arcane Whip'),
+    'HIC - Ossuary of the Innocents : Medusa Defeated': LocationData(7102025, "Holy Innocents' Cemetery", 'Rusted Harpe and Aegis', C_BC_Category.WEAPON, 'Nothing extra'),
+    'HIC - Fountain of the Innocents : Ghost': LocationData(7103007, "Holy Innocents' Cemetery", 'The Prophetess First Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    "HIC - Pauper's Grave : Ghost": LocationData(7103008, "Holy Innocents' Cemetery", 'The Prophetess Second Clue', C_BC_Category.CLUE, 'Arcane Whip'),
+    'HIC - Sepulcher of the Knight : Ghost': LocationData(7103009, "Holy Innocents' Cemetery", 'The Prophetess Third Clue', C_BC_Category.CLUE, 'Arcane Whip'),
+    'HIC - Roman Baths : Ghost': LocationData(7103010, "Holy Innocents' Cemetery", 'The Prophetess Fourth Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'HIC - Ossuary of the Innocents : Medusa Absorbed - Tarot': LocationData(7104005, "Holy Innocents' Cemetery", 'Tarot : The Prophetess', C_BC_Category.TAROT, 'Nothing extra'),
+    'HIC - Mausoleum of the Queens : Aliénor Absorbed': LocationData(7104016, "Holy Innocents' Cemetery", 'Tarot : The Sage', C_BC_Category.TAROT, 'Nothing extra'),
+    'HIC - Ancient Sewers : Brave Heart Fragment': LocationData(7105004, "Holy Innocents' Cemetery", 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip AND Smash'),
+    'HIC - Mausoleum of the Kings : Brave Heart Fragment': LocationData(7105005, "Holy Innocents' Cemetery", 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    'HIC - Ossuary of the Innocents : Brave Heart Fragment': LocationData(7105006, "Holy Innocents' Cemetery", 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip'),
+    'HIC - Cloister : Wise Heart Fragment': LocationData(7105028, "Holy Innocents' Cemetery", 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip'),
+    'HIC - Mausoleum of the Kings : Wise Heart Fragment': LocationData(7105029, "Holy Innocents' Cemetery", 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    'HIC - Roman Baths : Wise Heart Fragment': LocationData(7105030, "Holy Innocents' Cemetery", 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip'),
+    'HIC - Ossuary of the Innocents : ATK Book': LocationData(7105052, "Holy Innocents' Cemetery", 'ATK Book', C_BC_Category.AUGMENTATION, 'Arcane Whip'),
+    'HIC - Overgrown Crypt : ATK Book': LocationData(7105053, "Holy Innocents' Cemetery", 'ATK Book', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    'HIC - Ancient Sewers : DEF Book': LocationData(7105066, "Holy Innocents' Cemetery", 'DEF Book', C_BC_Category.AUGMENTATION, 'Arcane Whip'),
+    'HIC - Flooded Crypt : DEF Book': LocationData(7105067, "Holy Innocents' Cemetery", 'DEF Book', C_BC_Category.AUGMENTATION, 'Arcane Whip AND Smash'),
+    'HIC - Ossuary of the Innocents : Medusa Absorbed - Key': LocationData(7107003, "Holy Innocents' Cemetery", "The Prophetess's Key", C_BC_Category.KIS, 'Nothing extra'),
+    'HIC - Pillaged Tombs : Mammon Altar': LocationData(7107018, "Holy Innocents' Cemetery", 'Trembling Eye', C_BC_Category.KIS, 'Arcane Whip AND Holy Light AND Smash AND Double Jump AND The Shadow Confronted'),
+    'HIC - Ancient Sewers : EXP Statue': LocationData(7108029, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Nothing extra'),
+    'HIC - Cemetery Entrance : EXP Statue': LocationData(7108030, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Arcane Whip'),
+    'HIC - Fountain of the Innocents : EXP Statue': LocationData(7108031, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Arcane Whip'),
+    'HIC - Hot Springs : EXP Statue': LocationData(7108032, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Arcane Whip'),
+    'HIC - Memorial for the Dead : EXP Statue 1': LocationData(7108033, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Arcane Whip'),
+    'HIC - Memorial for the Dead : EXP Statue 2': LocationData(7108034, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Arcane Whip'),
+    'HIC - Memorial for the Dead : EXP Statue 3': LocationData(7108035, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Arcane Whip'),
+    'HIC - Overgrown Crypt : EXP Statue 1': LocationData(7108036, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Aerial Rush AND Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    'HIC - Overgrown Crypt : EXP Statue 2': LocationData(7108037, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Aerial Rush AND Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    "HIC - Pauper's Grave : EXP Statue": LocationData(7108038, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Arcane Whip'),
+    'HIC - Roman Baths : EXP Statue 1': LocationData(7108039, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Arcane Whip'),
+    'HIC - Roman Baths : EXP Statue 2': LocationData(7108040, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Arcane Whip'),
+    'HIC - Ruins Entrance : EXP Statue': LocationData(7108041, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Arcane Whip'),
+    'HIC - Sepulcher of the Knight : EXP Statue': LocationData(7108042, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Arcane Whip'),
+    "HIC - Serpents' Lair : EXP Statue": LocationData(7108043, "Holy Innocents' Cemetery", 'Experience Statue 150', C_BC_Category.EXPS, 'Arcane Whip'),
+    # Library
+    'L - Lower Rhetoric Shelves : Silver Chest': LocationData(7101020, 'Library', "Lich's Mark", C_BC_Category.RELIC, 'Nothing extra'),
+    'L - Upper Rhetoric Shelves : Silver Chest': LocationData(7101021, 'Library', 'Midnight Tear', C_BC_Category.RELIC, 'Nothing extra'),
+    'L - Curiosity Cabinet : Silver Chest': LocationData(7101030, 'Library', "Revenant's Shard", C_BC_Category.RELIC, 'Arcane Whip AND Smash'),
+    'L - Study Room : Silver Chest': LocationData(7101041, 'Library', "Wraith's Tear", C_BC_Category.RELIC, 'Aerial Rush AND Arcane Whip AND Double Jump'),
+    'L - Fine Arts Shelves : Gold Chest': LocationData(7102002, 'Library', 'Thorn Whip', C_BC_Category.WEAPON, 'Nothing extra'),
+    "L - Lisa's Laboratory : Gold Chest": LocationData(7102011, 'Library', 'Durandal', C_BC_Category.WEAPON, 'Nothing extra'),
+    'L - Condemned Shelves : Gold Chest': LocationData(7102026, 'Library', 'Fleuret and Tower Shield', C_BC_Category.WEAPON, 'Nothing extra'),
+    'L - Natural Philosophy Shelves : Note': LocationData(7103017, 'Library', 'The Occultist First Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    "L - Astronomer's Office : Note": LocationData(7103019, 'Library', 'The Occultist Third Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'L - Drawing Room : Note': LocationData(7103020, 'Library', 'The Occultist Fourth Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'L - Observation Tower : Spy Statue': LocationData(7103021, 'Library', 'The Occultist Fifth Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'L - Observatory : Carmilla Absorbed - Tarot': LocationData(7104008, 'Library', 'Tarot : The Occultist', C_BC_Category.TAROT, 'Nothing extra'),
+    'L - Library Foyer : Brave Heart Fragment': LocationData(7105016, 'Library', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'L - Planetarium : Brave Heart Fragment': LocationData(7105017, 'Library', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'L - Poetry Shelves : Brave Heart Fragment': LocationData(7105018, 'Library', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'L - Fine Arts Shelves : Wise Heart Fragment': LocationData(7105040, 'Library', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Arcane Whip'),
+    'L - Planetarium : Wise Heart Fragment': LocationData(7105041, 'Library', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'L - Rhetoric Shelves : Wise Heart Fragment': LocationData(7105042, 'Library', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Holy Light AND Smash'),
+    'L - Observatory : Carmilla Defeated': LocationData(7107004, 'Library', "Brauner's Paintbrush", C_BC_Category.KIS, 'Nothing extra'),
+    'L - Observatory : Carmilla Absorbed - Skill': LocationData(7107008, 'Library', 'Aerial Rush', C_BC_Category.KIS, 'Nothing extra'),
+    "L - Astronomer's Office : EXP Statue": LocationData(7108104, 'Library', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'L - Exhibition Room : EXP Statue': LocationData(7108105, 'Library', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'L - Library Foyer : EXP Statue': LocationData(7108106, 'Library', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'L - Natural Philosophy Shelves : EXP Statue 1': LocationData(7108107, 'Library', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'L - Natural Philosophy Shelves : EXP Statue 2': LocationData(7108108, 'Library', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'L - Poetry Shelves : EXP Statue': LocationData(7108109, 'Library', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'L - Study Room : EXP Statue 1': LocationData(7108110, 'Library', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'L - Study Room : EXP Statue 2': LocationData(7108111, 'Library', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'L - Trophy Room : EXP Statue': LocationData(7108112, 'Library', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    # Main Hall
+    "MH - Servant's Quarters : Silver Chest": LocationData(7101002, 'Main Hall', "Banshee's Wall", C_BC_Category.RELIC, 'Arcane Whip AND Smash'),
+    'MH - Abandoned Staircase : Silver Chest': LocationData(7101004, 'Main Hall', 'Blackened Heart', C_BC_Category.RELIC, 'Aerial Rush AND Arcane Whip AND Double Jump'),
+    'MH - Archives : Silver Chest': LocationData(7101005, 'Main Hall', 'Blood Vial', C_BC_Category.RELIC, 'Arcane Whip AND Double Jump'),
+    'MH - Wine Cellar : Silver Chest': LocationData(7101008, 'Main Hall', 'Cursed Coin', C_BC_Category.RELIC, 'Arcane Whip'),
+    'MH - Abandoned Workshop : Silver Chest': LocationData(7101014, 'Main Hall', 'Ghostly Pendant', C_BC_Category.RELIC, 'Arcane Whip'),
+    'MH - Crematorium : Silver Chest': LocationData(7101016, 'Main Hall', 'Grim Token', C_BC_Category.RELIC, 'Aerial Rush AND Arcane Whip'),
+    'MH - West Hall : Silver Chest': LocationData(7101040, 'Main Hall', "Witch's Knot", C_BC_Category.RELIC, 'Arcane Whip'),
+    'MH - Inner Courtyard : Gold Chest': LocationData(7102003, 'Main Hall', 'Morning Star', C_BC_Category.WEAPON, 'Aerial Rush AND Arcane Whip AND Double Jump'),
+    'MH - Watch Tower : Gold Chest': LocationData(7102014, 'Main Hall', 'Rapiers', C_BC_Category.WEAPON, 'Arcane Whip'),
+    'MH - Old Gallery : Gold Chest': LocationData(7102022, 'Main Hall', 'Jewel Knuckles', C_BC_Category.WEAPON, 'Arcane Whip'),
+    "MH - Alucard's Tower : Unique Reward": LocationData(7102028, 'Main Hall', "Alucard's Sword and Shield", C_BC_Category.WEAPON, 'Nothing extra'),
+    'MH - Abandoned Workshop : Spy Statue': LocationData(7103011, 'Main Hall', 'The Builder First Clue', C_BC_Category.CLUE, 'Arcane Whip'),
+    'MH - Old Gallery : Spy Statue': LocationData(7103013, 'Main Hall', 'The Artist First Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'MH - Elevated Tower : Spy Statue': LocationData(7103014, 'Main Hall', 'The Artist Second Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'MH - Gallery of Eternal Night : Painting': LocationData(7103015, 'Main Hall', 'The Artist Third Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    "MH - Brauner's Atelier : Note 1": LocationData(7103016, 'Main Hall', 'The Artist Fourth Clue', C_BC_Category.CLUE, 'Arcane Whip'),
+    "MH - Brauner's Atelier : Note 2": LocationData(7103018, 'Main Hall', 'The Occultist Second Clue', C_BC_Category.CLUE, 'Arcane Whip'),
+    "MH - Brauner's Atelier : Brauner Absorbed": LocationData(7104007, 'Main Hall', 'Tarot : The Artist', C_BC_Category.TAROT, 'Nothing extra'),
+    'MH - Armoury : Brave Heart Fragment': LocationData(7105010, 'Main Hall', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip'),
+    'MH - Balcony : Brave Heart Fragment': LocationData(7105011, 'Main Hall', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    'MH - Mirror Rooms : Brave Heart Fragment': LocationData(7105012, 'Main Hall', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Double Jump'),
+    'MH - Balcony : Wise Heart Fragment': LocationData(7105034, 'Main Hall', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    'MH - Entrance Corridor : Wise Heart Fragment': LocationData(7105035, 'Main Hall', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip OR Double Jump OR Aerial Rush'),
+    'MH - Wine Cellar : Wise Heart Fragment': LocationData(7105036, 'Main Hall', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip OR Double Jump'),
+    'MH - Old Gallery : ATK Book': LocationData(7105054, 'Main Hall', 'ATK Book', C_BC_Category.AUGMENTATION, 'Arcane Whip'),
+    'MH - Wine Cellar : ATK Book': LocationData(7105055, 'Main Hall', 'ATK Book', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Arcane Whip AND Double Jump'),
+    'MH - Mirror Rooms : DEF Book': LocationData(7105068, 'Main Hall', 'DEF Book', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    "MH - Servants' Quarters : DEF Book": LocationData(7105069, 'Main Hall', 'DEF Book', C_BC_Category.AUGMENTATION, 'Smash'),
+    'MH - Armoury : EXP Statue': LocationData(7108064, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip AND Double Jump'),
+    'MH - Ballrooms : EXP Statue 1': LocationData(7108065, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip'),
+    'MH - Ballrooms : EXP Statue 2': LocationData(7108066, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip'),
+    'MH - Boudoirs : EXP Statue': LocationData(7108067, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Nothing extra'),
+    'MH - Dungeon : EXP Statue 1': LocationData(7108068, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip'),
+    'MH - Dungeon : EXP Statue 2': LocationData(7108069, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip OR Double Jump'),
+    'MH - Dungeon : EXP Statue 3': LocationData(7108070, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Aerial Rush AND Arcane Whip AND Double Jump'),
+    'MH - Dungeon : EXP Statue 4': LocationData(7108071, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip'),
+    'MH - Dungeon : EXP Statue 5': LocationData(7108072, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip'),
+    'MH - Entrance Corridor : EXP Statue 1': LocationData(7108073, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip OR Double Jump'),
+    'MH - Entrance Corridor : EXP Statue 2': LocationData(7108074, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip OR Double Jump'),
+    'MH - Grand Hall : EXP Statue 1': LocationData(7108075, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip'),
+    'MH - Grand Hall : EXP Statue 2': LocationData(7108076, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Nothing extra'),
+    'MH - Grand Hall : EXP Statue 3': LocationData(7108077, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip OR Double Jump'),
+    'MH - Grand Hall : EXP Statue 4': LocationData(7108078, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip'),
+    'MH - Grand Hall : EXP Statue 5': LocationData(7108079, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip'),
+    'MH - Torture Chambers : EXP Statue 1': LocationData(7108080, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip AND Holy Light'),
+    'MH - Torture Chambers : EXP Statue 2': LocationData(7108081, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip'),
+    'MH - Torture Chambers : EXP Statue 3': LocationData(7108082, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Aerial Rush AND Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    'MH - West Hall : EXP Statue': LocationData(7108083, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip'),
+    'MH - Wine Cellar : EXP Statue': LocationData(7108084, 'Main Hall', 'Experience Statue 250', C_BC_Category.EXPS, 'Arcane Whip'),
+    # Mammon's Lair
+    "CoP - Mammon's Lair : Mammon Absorbed": LocationData(7104010, "Mammon's Lair", 'Tarot : The Miser', C_BC_Category.TAROT, 'Nothing extra'),
+    "CoP - Mammon's Lair : Mammon Defeated": LocationData(7107005, "Mammon's Lair", "Ferryman's Obol", C_BC_Category.KIS, 'Nothing extra'),
+    # Master's Quarter
+    'MQ - Sanctuary of Solitude : Silver Chest': LocationData(7101015, "Master's Quarter", 'Gloomstone', C_BC_Category.RELIC, 'Nothing extra'),
+    # Notre-Dame
+    'ND - Chapel of Patience : Silver Chest': LocationData(7101003, 'Notre-Dame', "Beelzebub's Seal", C_BC_Category.RELIC, 'Nothing extra'),
+    'ND - East Gallery : Silver Chest': LocationData(7101012, 'Notre-Dame', 'Eldritch Talisman', C_BC_Category.RELIC, 'Nothing extra'),
+    'ND - Reliquary : Silver Chest': LocationData(7101019, 'Notre-Dame', 'Infernal Medallion', C_BC_Category.RELIC, 'Aerial Rush AND Arcane Whip AND Double Jump AND Smash'),
+    'ND - Nave : Silver Chest': LocationData(7101034, 'Notre-Dame', 'Soul Fragment', C_BC_Category.RELIC, 'Nothing extra'),
+    'ND - Transept : Silver Chest': LocationData(7101039, 'Notre-Dame', "Witch's Brew", C_BC_Category.RELIC, 'Aerial Rush AND Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    "ND - Deacon's Quarter : Trevor Belmont": LocationData(7102004, 'Notre-Dame', 'Vampire Killer', C_BC_Category.WEAPON, 'Nothing extra'),
+    'ND - Path of the Penitent : Gold Chest': LocationData(7102007, 'Notre-Dame', 'Joyeuse', C_BC_Category.WEAPON, 'Nothing extra'),
+    'ND - Chapel : Arthur Defeated': LocationData(7102012, 'Notre-Dame', 'Excalibur', C_BC_Category.WEAPON, 'Tarot : The Builder'),
+    'ND - Great Organ Room : Unique Reward': LocationData(7102016, 'Notre-Dame', 'War and Famine', C_BC_Category.WEAPON, 'Aerial Rush AND Double Jump AND Smash'),
+    'ND - Tower Entrance : Gold Chest': LocationData(7102027, 'Notre-Dame', "Arondight and Lancelot's Shield", C_BC_Category.WEAPON, 'Nothing extra'),
+    'ND - Gallery of the Four Virtues : Stele': LocationData(7103002, 'Notre-Dame', 'The Self Clue', C_BC_Category.CLUE, 'Arcane Whip AND Holy Light AND Smash AND Aerial Rush AND Double Jump AND Tarot : The Judge AND Tarot : The Sage AND Tarot : The Whisperer AND Tarot : The Warrior'),
+    'ND - La Flèche : Note': LocationData(7103023, 'Notre-Dame', 'The Shadow Second Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'ND - Collapsed Crypt : Ghost': LocationData(7103024, 'Notre-Dame', 'The Shadow Third Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'ND - Great Organ Room : Note': LocationData(7103025, 'Notre-Dame', 'The Shadow Fourth Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'ND - Transept : Note': LocationData(7103026, 'Notre-Dame', 'The Shadow Fifth Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'ND - Sealed Scriptorium : Note': LocationData(7103027, 'Notre-Dame', 'The Shadow Sixth Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'ND - Chapel : Stele': LocationData(7103035, 'Notre-Dame', 'The Brittle King Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'ND - Gallery of the Four Virtues : Doppelganger Absorbed': LocationData(7104002, 'Notre-Dame', 'Tarot : The Self', C_BC_Category.TAROT, "Arcane Whip AND Holy Light AND Aerial Rush AND Smash AND Double Jump AND The Shadow Confronted AND Brauner's Paintbrush AND Tarot : The Artist AND Virtue of Courage AND Virtue of Temperance AND Virtue of Justice AND Virtue of Prudence"),
+    'ND - Choir : Death Almost Absorbed - Tarot': LocationData(7104009, 'Notre-Dame', 'Tarot : The Shadow', C_BC_Category.TAROT, 'Nothing extra'),
+    'ND - Chapel : Arthur Absorbed': LocationData(7104014, 'Notre-Dame', 'Tarot : The Brittle King', C_BC_Category.TAROT, 'Tarot : The Builder'),
+    'ND - La Flèche : Brave Heart Fragment': LocationData(7105013, 'Notre-Dame', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'ND - The Forest : Brave Heart Fragment': LocationData(7105014, 'Notre-Dame', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'ND - Tree of Saints : Brave Heart Fragment': LocationData(7105015, 'Notre-Dame', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'ND - Apse : Wise Heart Fragment': LocationData(7105037, 'Notre-Dame', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Arcane Whip AND Double Jump AND Smash'),
+    'ND - Chapel of Patience : Wise Heart Fragment': LocationData(7105038, 'Notre-Dame', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'ND - Tree of Saints : Wise Heart Fragment': LocationData(7105039, 'Notre-Dame', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    'ND - Narthex : ATK Book': LocationData(7105056, 'Notre-Dame', 'ATK Book', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Arcane Whip AND Double Jump AND Smash'),
+    'ND - Tomb of the Chevaliers : ATK Book 1': LocationData(7105057, 'Notre-Dame', 'ATK Book', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'ND - Tomb of the Chevaliers : ATK Book 2': LocationData(7105058, 'Notre-Dame', 'ATK Book', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'ND - Tree of Saints : ATK Book': LocationData(7105059, 'Notre-Dame', 'ATK Book', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'ND - East Triforium : DEF Book': LocationData(7105070, 'Notre-Dame', 'DEF Book', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'ND - Great Organ Room : DEF Book': LocationData(7105071, 'Notre-Dame', 'DEF Book', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    'ND - Tree of Saints : DEF Book': LocationData(7105072, 'Notre-Dame', 'DEF Book', C_BC_Category.AUGMENTATION, 'Aerial Rush AND Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    'ND - Choir : Death Almost Absorbed - Skill': LocationData(7107010, 'Notre-Dame', 'Double Jump', C_BC_Category.KIS, 'Nothing extra'),
+    'ND - Courage of Gabriel : Bell Rang': LocationData(7107011, 'Notre-Dame', 'Virtue of Courage', C_BC_Category.KIS, 'Tarot : The Warrior'),
+    'ND - Temperance of Mary : Bell Rang': LocationData(7107012, 'Notre-Dame', 'Virtue of Temperance', C_BC_Category.KIS, 'Tarot : The Whisperer'),
+    'ND - Justice of Emmanuel : Bell Rang': LocationData(7107013, 'Notre-Dame', 'Virtue of Justice', C_BC_Category.KIS, 'Tarot : The Judge'),
+    'ND - Prudence of Denis : Bell Rang': LocationData(7107014, 'Notre-Dame', 'Virtue of Prudence', C_BC_Category.KIS, 'Tarot : The Sage'),
+    'ND - Apse : EXP Statue 1': LocationData(7108085, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Aerial Rush AND Arcane Whip AND Double Jump AND Smash'),
+    'ND - Apse : EXP Statue 2': LocationData(7108086, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Aerial Rush AND Arcane Whip AND Double Jump AND Smash'),
+    'ND - Boss Arthur : EXP Statue 1': LocationData(7108087, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Tarot : The Builder'),
+    'ND - Boss Arthur : EXP Statue 2': LocationData(7108088, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Tarot : The Builder'),
+    'ND - Chapel of Patience : EXP Statue': LocationData(7108089, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'ND - East Gallery : EXP Statue 1': LocationData(7108090, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'ND - East Gallery : EXP Statue 2': LocationData(7108091, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'ND - Great Organ Room : EXP Statue': LocationData(7108092, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'ND - Narthex : EXP Statue': LocationData(7108093, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'ND - Nave : EXP Statue 1': LocationData(7108094, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'ND - Nave : EXP Statue 2': LocationData(7108095, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'ND - Notre-Dame Undercroft : EXP Statue': LocationData(7108096, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'ND - Path of the Penitent : EXP Statue': LocationData(7108097, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'ND - Reliquary : EXP Statue': LocationData(7108098, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'ND - The Forest : EXP Statue': LocationData(7108099, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'ND - Tomb of the Chevaliers : EXP Statue 1': LocationData(7108100, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'ND - Tomb of the Chevaliers : EXP Statue 2': LocationData(7108101, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    'ND - Transept : EXP Statue': LocationData(7108102, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Aerial Rush AND Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    'ND - West Triforium : EXP Statue': LocationData(7108103, 'Notre-Dame', 'Experience Statue 300', C_BC_Category.EXPS, 'Nothing extra'),
+    # Paris Streets
+    "PS - Seer's Hovel : Silver Chest": LocationData(7101006, 'Paris Streets', 'Crypt Key', C_BC_Category.RELIC, 'Arcane Whip'),
+    'PS - Ruined Market : Silver Chest': LocationData(7101009, 'Paris Streets', 'Dark Sigil', C_BC_Category.RELIC, 'Arcane Whip AND Double Jump'),
+    'PS - Guard Level : Silver Chest': LocationData(7101026, 'Paris Streets', 'Obsidian Fang', C_BC_Category.RELIC, 'Arcane Whip AND Holy Light'),
+    'PS - Burned District : Silver Chest': LocationData(7101032, 'Paris Streets', 'Shadow Veil', C_BC_Category.RELIC, 'Arcane Whip AND Holy Light'),
+    'PS - Central Sewer Drain : Silver Chest': LocationData(7101036, 'Paris Streets', 'Twilight Gem', C_BC_Category.RELIC, 'Double Jump OR Arcane Whip'),
+    'PS - Justice District Sewers : Gold Chest': LocationData(7102006, 'Paris Streets', 'Bastard Sword', C_BC_Category.WEAPON, 'Arcane Whip AND Holy Light'),
+    'PS - Palace of Justice : Saint Louis': LocationData(7102008, 'Paris Streets', 'Valmanway', C_BC_Category.WEAPON, '24 x Heart Fragments'),
+    "PS - Roof of the Tower : Jeanne d'Arc Defeated": LocationData(7102009, 'Paris Streets', 'Burnt Sword of Fierbois', C_BC_Category.WEAPON, 'Nothing extra'),
+    'PS - Sewer Reservoir : Gold Chest': LocationData(7102021, 'Paris Streets', 'Cestus', C_BC_Category.WEAPON, 'Arcane Whip OR Double Jump'),
+    'PS - Burned District : Ghost': LocationData(7103005, 'Paris Streets', 'The Warrior First Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'PS - Upper Tower : Ghost': LocationData(7103006, 'Paris Streets', 'The Warrior Second Clue', C_BC_Category.CLUE, 'Arcane Whip'),
+    "PS - Bishop's Office : Note 1": LocationData(7103028, 'Paris Streets', 'The Miser First Clue', C_BC_Category.CLUE, 'The Shadow Confronted'),
+    "PS - Bishop's Office : Note 2": LocationData(7103029, 'Paris Streets', 'The Miser Second Clue', C_BC_Category.CLUE, 'The Shadow Confronted'),
+    "PS - Bishop's Office : Note 3": LocationData(7103030, 'Paris Streets', 'The Miser Third Clue', C_BC_Category.CLUE, 'The Shadow Confronted AND Arcane Whip'),
+    'PS - Hospital : Ghost': LocationData(7103032, 'Paris Streets', 'The Whisperer Clue', C_BC_Category.CLUE, 'The Shadow Confronted AND Arcane Whip AND Double Jump AND Smash'),
+    'PS - Palace of Justice : Stele': LocationData(7103036, 'Paris Streets', 'The Judge Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    "PS - Roof of the Tower : Jeanne d'Arc Absorbed - Tarot": LocationData(7104004, 'Paris Streets', 'Tarot : The Warrior', C_BC_Category.TAROT, 'Nothing extra'),
+    'PS - Palace of Justice : Saint Louis Absorbed': LocationData(7104015, 'Paris Streets', 'Tarot : The Judge', C_BC_Category.TAROT, '24 x Heart Fragments'),
+    'PS - Court of Justice : Brave Heart Fragment': LocationData(7105002, 'Paris Streets', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip AND Holy Light'),
+    'PS - Prison Tower : Brave Heart Fragment': LocationData(7105003, 'Paris Streets', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip'),
+    'PS - Guard Storehouse : Wise Heart Fragment': LocationData(7105025, 'Paris Streets', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip AND Double Jump AND Holy Light AND Smash'),
+    'PS - Street of the Tomb Masons : Wise Heart Fragment': LocationData(7105026, 'Paris Streets', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip OR (Arcane Whip AND Double Jump)'),
+    'PS - Torture Level : Wise Heart Fragment': LocationData(7105027, 'Paris Streets', 'Wise Heart Fragment', C_BC_Category.AUGMENTATION, 'Arcane Whip AND Holy Light'),
+    'PS - Prison Tower : ATK Book': LocationData(7105050, 'Paris Streets', 'ATK Book', C_BC_Category.AUGMENTATION, '(Arcane Whip AND Double Jump) OR Arcane Whip'),
+    'PS - Stairs to the Tower Roof : ATK Book': LocationData(7105051, 'Paris Streets', 'ATK Book', C_BC_Category.AUGMENTATION, 'Arcane Whip AND Holy Light'),
+    'PS - Upper Tower : DEF Book': LocationData(7105065, 'Paris Streets', 'DEF Book', C_BC_Category.AUGMENTATION, 'Nothing extra'),
+    "PS - Roof of the Tower : Jeanne d'Arc Absorbed - Key": LocationData(7107002, 'Paris Streets', "The Warrior's Key", C_BC_Category.KIS, 'Nothing extra'),
+    "PS - Roof of the Tower : Jeanne d'Arc Absorbed - Skill": LocationData(7107007, 'Paris Streets', 'Holy Light', C_BC_Category.KIS, 'Nothing extra'),
+    'PS - Hospital : Mammon Altar': LocationData(7107019, 'Paris Streets', 'Thrilling Eye', C_BC_Category.KIS, 'Arcane Whip AND Holy Light AND Smash AND Double Jump AND The Shadow Confronted'),
+    'PS - Bridge of the Millers : EXP Statue': LocationData(7108008, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'The Shadow Confronted AND Arcane Whip'),
+    'PS - Burned District : EXP Statue 1': LocationData(7108009, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Nothing extra'),
+    'PS - Burned District : EXP Statue 2': LocationData(7108010, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip'),
+    'PS - Court of Miracles : EXP Statue 1': LocationData(7108011, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip OR Double Jump'),
+    'PS - Court of Miracles : EXP Statue 2': LocationData(7108012, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip OR Double Jump'),
+    'PS - Court of Miracles : EXP Statue 3': LocationData(7108013, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip OR Double Jump'),
+    'PS - Guard Level : EXP Statue': LocationData(7108014, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Nothing extra'),
+    'PS - Morgue : EXP Statue 1': LocationData(7108015, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip'),
+    'PS - Morgue : EXP Statue 2': LocationData(7108016, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip'),
+    'PS - Prison Tower : EXP Statue 1': LocationData(7108017, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip OR Double Jump'),
+    'PS - Prison Tower : EXP Statue 2': LocationData(7108018, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip'),
+    'PS - Prison Tower : EXP Statue 3': LocationData(7108019, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip'),
+    'PS - Prison Tower : EXP Statue 4': LocationData(7108020, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip'),
+    'PS - Prison Tower : EXP Statue 5': LocationData(7108021, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip'),
+    "PS - Seer's Hovel : EXP Statue": LocationData(7108022, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip'),
+    'PS - Sewer Reservoir : EXP Statue 1': LocationData(7108023, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Holy Light OR Double Jump OR Whip OR Thorn Whip OR Morning Star OR Vampire Killer OR Tarot : The Artist'),
+    'PS - Street of the Tomb Masons : EXP Statue 1': LocationData(7108024, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Double Jump OR Arcane Whip'),
+    'PS - Street of the Tomb Masons : EXP Statue 2': LocationData(7108025, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Double Jump OR Arcane Whip'),
+    'PS - Street of the Tomb Masons : EXP Statue 3': LocationData(7108026, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Smash'),
+    'PS - Street of the Tomb Masons : EXP Statue 4': LocationData(7108027, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip OR Double Jump'),
+    'PS - Upper Tower : EXP Statue': LocationData(7108028, 'Paris Streets', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip'),
+    # Paris Streets (Start)
+    'PS - Bank of the River Seine : Starting Relic (DLC)': LocationData(7101042, 'Paris Streets (Start)', "Family's Grave", C_BC_Category.RELIC, 'Nothing extra'),
+    'PS - Bank of the River Seine : Starting Weapon': LocationData(7102005, 'Paris Streets (Start)', 'Longsword', C_BC_Category.WEAPON, 'Nothing extra'),
+    'PS - Bank of the River Seine : Starting Clue': LocationData(7103001, 'Paris Streets (Start)', 'The Cursed Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'PS - Path of the Rat : Ghost': LocationData(7103003, 'Paris Streets (Start)', 'The Fallen First Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'PS - Ruined Market : Ghost': LocationData(7103004, 'Paris Streets (Start)', 'The Fallen Second Clue', C_BC_Category.CLUE, 'Nothing extra'),
+    'PS - Bank of the River Seine : Starting Tarot Card': LocationData(7104001, 'Paris Streets (Start)', 'Tarot : The Cursed', C_BC_Category.TAROT, 'Nothing extra'),
+    'PS - Gate of the Catacombs : Leon Belmont Absorbed - Tarot': LocationData(7104003, 'Paris Streets (Start)', 'Tarot : The Fallen', C_BC_Category.TAROT, 'Nothing extra'),
+    'PS - Undercity : Brave Heart Fragment': LocationData(7105001, 'Paris Streets (Start)', 'Brave Heart Fragment', C_BC_Category.AUGMENTATION, '(Double Jump AND Holy Light) OR (Arcane Whip AND Holy Light) OR (Aerial Rush AND Holy Light)'),
+    'PS - Sewer Reservoir : ATK Book': LocationData(7105049, 'Paris Streets (Start)', 'ATK Book', C_BC_Category.AUGMENTATION, 'Arcane Whip OR (Aerial Rush AND Double Jump)'),
+    'PS - Abandoned Sewers : DEF Book': LocationData(7105063, 'Paris Streets (Start)', 'DEF Book', C_BC_Category.AUGMENTATION, '(Double Jump AND Holy Light) OR (Arcane Whip AND Holy Light)'),
+    'PS - Ruined Market : DEF Book': LocationData(7105064, 'Paris Streets (Start)', 'DEF Book', C_BC_Category.AUGMENTATION, 'Double Jump OR Aerial Rush OR Arcane Whip'),
+    'PS - Gate of the Catacombs : Leon Belmont Absorbed - Key': LocationData(7107001, 'Paris Streets (Start)', "The Fallen's Key", C_BC_Category.KIS, 'Nothing extra'),
+    'PS - Gate of the Catacombs : Leon Belmont Absorbed - Skill': LocationData(7107006, 'Paris Streets (Start)', 'Arcane Whip', C_BC_Category.KIS, 'Nothing extra'),
+    'PS - Abandoned Sewers : EXP Statue 1': LocationData(7108001, 'Paris Streets (Start)', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip OR Double Jump'),
+    'PS - Abandoned Sewers : EXP Statue 2': LocationData(7108002, 'Paris Streets (Start)', 'Experience Statue 100', C_BC_Category.EXPS, 'Double Jump OR Arcane Whip'),
+    'PS - Central Sewer Drain : EXP Statue': LocationData(7108003, 'Paris Streets (Start)', 'Experience Statue 100', C_BC_Category.EXPS, 'Nothing extra'),
+    'PS - Path of the Rat : EXP Statue': LocationData(7108004, 'Paris Streets (Start)', 'Experience Statue 100', C_BC_Category.EXPS, 'Nothing extra'),
+    'PS - Ruined Market : EXP Statue': LocationData(7108005, 'Paris Streets (Start)', 'Experience Statue 100', C_BC_Category.EXPS, 'Nothing extra'),
+    'PS - Sewer Reservoir : EXP Statue 2': LocationData(7108006, 'Paris Streets (Start)', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip OR Double Jump'),
+    'PS - Undercity : EXP Statue': LocationData(7108007, 'Paris Streets (Start)', 'Experience Statue 100', C_BC_Category.EXPS, 'Arcane Whip OR (Double Jump AND Holy Light) OR Double Jump'),
+    # Works of Mercy (virtual)
+    'WOM - Cursed Flame 1': LocationData(7106001, 'Works of Mercy (virtual)', 'WOM Cursed Flame', C_BC_Category.WOMU, 'Tarot : The Cursed'),
+    'WOM - Absolution 1': LocationData(7106002, 'Works of Mercy (virtual)', 'WOM Absolution', C_BC_Category.WOMU, 'Tarot : The Self'),
+    'WOM - Absolution 2': LocationData(7106003, 'Works of Mercy (virtual)', 'WOM Absolution', C_BC_Category.WOMU, "Tarot : The Self AND Region: Master's Quarter AND Region: Clock Tower (Upper) AND Region: Hall of Mirrors AND Region: Catacombs of Paris AND Region: Notre-Dame"),
+    'WOM - Absolution 3': LocationData(7106004, 'Works of Mercy (virtual)', 'WOM Absolution', C_BC_Category.WOMU, 'Tarot : The Self'),
+    'WOM - Holy Cross 1': LocationData(7106005, 'Works of Mercy (virtual)', 'WOM Holy Cross', C_BC_Category.WOMU, 'Tarot : The Fallen AND ((3 of: Whip, Thorn Whip, Morning Star, Vampire Killer) OR 3 x Progressive Whip)'),
+    'WOM - Holy Cross 2': LocationData(7106006, 'Works of Mercy (virtual)', 'WOM Holy Cross', C_BC_Category.WOMU, 'Tarot : The Fallen'),
+    'WOM - Holy Cross 3': LocationData(7106007, 'Works of Mercy (virtual)', 'WOM Holy Cross', C_BC_Category.WOMU, 'Tarot : The Fallen AND ((1 of: Whip, Thorn Whip, Morning Star, Vampire Killer) OR 1 x Progressive Whip)'),
+    'WOM - Infernal Pyre 1': LocationData(7106008, 'Works of Mercy (virtual)', 'WOM Infernal Pyre', C_BC_Category.WOMU, 'Tarot : The Warrior AND Holy Light'),
+    'WOM - Infernal Pyre 2': LocationData(7106009, 'Works of Mercy (virtual)', 'WOM Infernal Pyre', C_BC_Category.WOMU, 'Tarot : The Warrior AND Region: Notre-Dame'),
+    'WOM - Infernal Pyre 3': LocationData(7106010, 'Works of Mercy (virtual)', 'WOM Infernal Pyre', C_BC_Category.WOMU, 'Tarot : The Warrior'),
+    'WOM - Petrifying Gaze 1': LocationData(7106011, 'Works of Mercy (virtual)', 'WOM Petrifying Gaze', C_BC_Category.WOMU, 'Tarot : The Prophetess'),
+    'WOM - Petrifying Gaze 2': LocationData(7106012, 'Works of Mercy (virtual)', 'WOM Petrifying Gaze', C_BC_Category.WOMU, 'Tarot : The Prophetess'),
+    'WOM - Fist of Talos 1': LocationData(7106013, 'Works of Mercy (virtual)', 'WOM Fist of Talos', C_BC_Category.WOMU, 'Tarot : The Builder'),
+    'WOM - Fist of Talos 2': LocationData(7106014, 'Works of Mercy (virtual)', 'WOM Fist of Talos', C_BC_Category.WOMU, 'Tarot : The Builder'),
+    'WOM - Fist of Talos 3': LocationData(7106015, 'Works of Mercy (virtual)', 'WOM Fist of Talos', C_BC_Category.WOMU, 'Tarot : The Builder AND Smash'),
+    'WOM - Masterpiece 1': LocationData(7106016, 'Works of Mercy (virtual)', 'WOM Masterpiece', C_BC_Category.WOMU, 'Tarot : The Artist'),
+    'WOM - Masterpiece 2': LocationData(7106017, 'Works of Mercy (virtual)', 'WOM Masterpiece', C_BC_Category.WOMU, 'Tarot : The Artist'),
+    'WOM - Masterpiece 3': LocationData(7106018, 'Works of Mercy (virtual)', 'WOM Masterpiece', C_BC_Category.WOMU, 'Tarot : The Artist AND All of region: Main Hall'),
+    'WOM - Blood Spikes 1': LocationData(7106019, 'Works of Mercy (virtual)', 'WOM Blood Spikes', C_BC_Category.WOMU, 'Tarot : The Occultist'),
+    'WOM - Blood Spikes 2': LocationData(7106020, 'Works of Mercy (virtual)', 'WOM Blood Spikes', C_BC_Category.WOMU, 'Tarot : The Occultist AND ((2 of: Pair of Longswords, Rapiers, Almace and Hauteclaire, War and Famine) OR 2 x Progressive Dual Blades)'),
+    'WOM - Blood Spikes 3': LocationData(7106021, 'Works of Mercy (virtual)', 'WOM Blood Spikes', C_BC_Category.WOMU, 'Tarot : The Occultist'),
+    'WOM - Soul Harvest 1': LocationData(7106022, 'Works of Mercy (virtual)', 'WOM Soul Harvest', C_BC_Category.WOMU, 'Tarot : The Shadow AND Region: Notre-Dame'),
+    'WOM - Soul Harvest 2': LocationData(7106023, 'Works of Mercy (virtual)', 'WOM Soul Harvest', C_BC_Category.WOMU, 'Tarot : The Shadow'),
+    'WOM - Soul Harvest 3': LocationData(7106024, 'Works of Mercy (virtual)', 'WOM Soul Harvest', C_BC_Category.WOMU, 'Tarot : The Shadow'),
+    'WOM - Wheel of Chaos 1': LocationData(7106025, 'Works of Mercy (virtual)', 'WOM Wheel of Chaos', C_BC_Category.WOMU, 'Tarot : The Miser'),
+    'WOM - Wheel of Chaos 2': LocationData(7106026, 'Works of Mercy (virtual)', 'WOM Wheel of Chaos', C_BC_Category.WOMU, 'Tarot : The Miser'),
+    'WOM - Wheel of Chaos 3': LocationData(7106027, 'Works of Mercy (virtual)', 'WOM Wheel of Chaos', C_BC_Category.WOMU, 'Tarot : The Miser'),
+    'WOM - Freezing Path 1': LocationData(7106028, 'Works of Mercy (virtual)', 'WOM Freezing Path', C_BC_Category.WOMU, 'Tarot : The Whisperer'),
+    'WOM - Freezing Path 2': LocationData(7106029, 'Works of Mercy (virtual)', 'WOM Freezing Path', C_BC_Category.WOMU, 'Tarot : The Whisperer'),
+    'WOM - Chronomantic Dive 1': LocationData(7106030, 'Works of Mercy (virtual)', 'WOM Chronomantic Dive', C_BC_Category.WOMU, 'Tarot : The Zealot'),
+    'WOM - Chronomantic Dive 2': LocationData(7106031, 'Works of Mercy (virtual)', 'WOM Chronomantic Dive', C_BC_Category.WOMU, 'Tarot : The Zealot AND All of region: Clock Tower AND All of region: Clock Tower (Upper)'),
+    'WOM - Life Drain 1': LocationData(7106032, 'Works of Mercy (virtual)', 'WOM Life Drain', C_BC_Category.WOMU, 'Tarot : The Temptress'),
+    'WOM - Life Drain 2': LocationData(7106033, 'Works of Mercy (virtual)', 'WOM Life Drain', C_BC_Category.WOMU, 'Tarot : The Temptress AND All of region: Hall of Mirrors'),
+    'WOM - Life Drain 3': LocationData(7106034, 'Works of Mercy (virtual)', 'WOM Life Drain', C_BC_Category.WOMU, 'Tarot : The Temptress'),
+    'WOM - Stained-Glass Shield 1': LocationData(7106035, 'Works of Mercy (virtual)', 'WOM Stained-Glass Shield', C_BC_Category.WOMU, 'Tarot : The Brittle King'),
+    'WOM - Stained-Glass Shield 2': LocationData(7106036, 'Works of Mercy (virtual)', 'WOM Stained-Glass Shield', C_BC_Category.WOMU, 'Tarot : The Brittle King'),
+    'WOM - Stained-Glass Shield 3': LocationData(7106037, 'Works of Mercy (virtual)', 'WOM Stained-Glass Shield', C_BC_Category.WOMU, 'Tarot : The Brittle King'),
+    'WOM - Chains of Justice 1': LocationData(7106038, 'Works of Mercy (virtual)', 'WOM Chains of Justice', C_BC_Category.WOMU, 'Tarot : The Judge'),
+    'WOM - Chains of Justice 2': LocationData(7106039, 'Works of Mercy (virtual)', 'WOM Chains of Justice', C_BC_Category.WOMU, 'Tarot : The Judge'),
+    'WOM - Chains of Justice 3': LocationData(7106040, 'Works of Mercy (virtual)', 'WOM Chains of Justice', C_BC_Category.WOMU, 'Tarot : The Judge AND 20 x Brave Heart Fragment AND 20 x Wise Heart Fragment'),
+    'WOM - Mirror Walk 1': LocationData(7106041, 'Works of Mercy (virtual)', 'WOM Mirror Walk', C_BC_Category.WOMU, "Tarot : The Sage AND Region: Master's Quarter AND Region: Paris Streets AND Region: Holy Innocents' Cemetery AND Region: Catacombs of Paris AND Region: Main Hall AND Region: Library AND Region: Hall of Mirrors AND Region: Notre-Dame AND Region: Clock Tower"),
+    'WOM - Mirror Walk 2': LocationData(7106042, 'Works of Mercy (virtual)', 'WOM Mirror Walk', C_BC_Category.WOMU, 'Tarot : The Sage'),
+    'WOM - Mirror Walk 3': LocationData(7106043, 'Works of Mercy (virtual)', 'WOM Mirror Walk', C_BC_Category.WOMU, 'Tarot : The Sage'),
 }

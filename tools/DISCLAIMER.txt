@@ -1,0 +1,7 @@
+Both files "Spreadsheet_rules.py" and "Spreadsheet_to_table.py" were made using IA in order to gain time
+I've personnally re-read those files twice and found nothing problematic.
+
+Down the line, I intend to rewrite them properly, and combine them.
+
+Sincerely,
+Odyce, main dev of the CVBC Archipelago client
