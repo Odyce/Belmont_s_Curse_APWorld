@@ -20,7 +20,7 @@ from .Locations import get_location_names
 from .Items import create_item, create_itempool, item_table, get_filler_item_name
 from .Options import C_BC_Options, create_option_groups
 from .Regions import create_regions
-from .Types import GAME_NAME
+from .Types import GAME_NAME, WORLD_VERSION
 from .Groups import item_groups, location_groups
 from .Rules import set_rules
 
@@ -78,6 +78,25 @@ class CBCWorld(World):
     def generate_early(self):
         # I highly recommend looking at other apworlds init files to see some examples
         opt = self.options
+
+        ## Beta: the client doesn't handle these yet, so they stay vanilla whatever the YAML says
+        ## I will fix these as my first priority, but for now, I just can't make them work
+        if opt.randomise_works_of_mercy:
+            opt.randomise_works_of_mercy.value = 0
+            logging.warning(f"{self.player_name}: Works of Mercy are not supported by the client yet, they stay vanilla")
+        if opt.progressive_virtues:
+            opt.progressive_virtues.value = 0
+            logging.warning(f"{self.player_name}: The Virtues are not supported by the client yet, Progressive Virtues was disabled")
+        if opt.randomise_shadows_flag:
+            opt.randomise_shadows_flag.value = 0
+            logging.warning(f"{self.player_name}: The Shadow Confronted is not supported by the client yet, it stays vanilla")
+        if opt.trap_chance.value != 0:
+            opt.trap_chance.value = 0
+            logging.warning(f"{self.player_name}: Traps are not supported by the client yet, they were disabled")
+        if opt.death_link:
+            opt.death_link.value = 0
+            logging.warning(f"{self.player_name}: DeathLink is not supported by the client yet, it was disabled")
+
         if opt.randomise_tarot_cards.value == 0 and opt.progressive_virtues:
             opt.progressive_virtues.value = 0
             logging.warning(f"{self.player_name}: You can't have progressive virtues if the tarot cards aren't randomised, so it was disabled")
@@ -133,8 +152,11 @@ class CBCWorld(World):
 
     # The slot data is what youre sending to the AP server kinda. You dont have to add all your options. Really you want the ones you think a pop tracker would use
     ## I did the very least required, I'll see later if it needs to be extended
+    ## First update, I did extend it, for versioning
     def fill_slot_data(self) -> Dict[str, Any]:
-        return self.options.as_dict("end_goal", "death_link", "death_link_mercy", "randomise_shadows_flag")
+        data = self.options.as_dict("end_goal", "death_link", "death_link_mercy", "randomise_shadows_flag")
+        data["world_version"] = WORLD_VERSION
+        return data
 
     def get_filler_item_name(self) -> str:
         return get_filler_item_name(self)

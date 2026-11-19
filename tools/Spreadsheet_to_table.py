@@ -2,11 +2,12 @@
 Generates the item or location table of the cvbc APWorld from the inventory spreadsheet.
 
 Usage:
-    python spreadsheet_to_table.py <path/to/inventory_cvbc.xlsx> <items|locations>
+    python spreadsheet_to_table.py <path/to/inventory_cvbc.xlsx> <items|locations|client>
 
 The result is written in a "tmp" folder next to this script (created if needed):
     tmp/ItemTable.py      -> item_table: Dict[str, ItemData]
     tmp/LocationTable.py  -> location_table: Dict[str, LocationData]
+    tmp/cvbc_data.json    -> data file read by the BepInEx client (copy it next to CVBC.Client.dll)
 
 Nothing is written if the spreadsheet has an error: every problem found is listed
 and the script exits with code 1. Fix the spreadsheet, not the generated file.
@@ -16,6 +17,8 @@ by the APWorld itself.
 """
 
 import argparse
+import json
+import re
 import sys
 from datetime import date
 from pathlib import Path
@@ -26,7 +29,7 @@ except ImportError:
     sys.exit("openpyxl is missing: run 'pip install openpyxl' first.")
 
 
-## Spreadsheet text -> member of C_BC_Category in Types.py. Keep both in sync.
+# Spreadsheet text -> member of C_BC_Category in Types.py. Keep both in sync.
 CATEGORIES = {
     "Relic": "RELIC",
     "Weapon": "WEAPON",
@@ -39,7 +42,7 @@ CATEGORIES = {
     "Trap": "TRAP",
 }
 
-## Second digit block of the AP IDs for each category (see the "ID Range" sheet).
+# Second digit block of the AP IDs for each category (see the "ID Range" sheet).
 ID_BLOCKS = {
     "Relic": 1, "Weapon": 2, "Clue": 3, "Tarot Cards": 4, "Augmentation": 5,
     "Work of Mercy upgrade": 6, "Key Item / Skill": 7, "EXP Statue": 8, "Trap": 9,
@@ -78,14 +81,14 @@ def read_sheet(workbook, sheet_name: str, wanted: dict) -> list:
     columns = {}
     for cell in sheet[HEADER_ROW]:
         if isinstance(cell.value, str):
-            columns[cell.value.replace("▼", "").strip()] = cell.column
-    missing = [header for header in wanted.values() if header not in columns]
+            columns[cell.value.replace("▼", "").strip().lower()] = cell.column  # headers are case-insensitive
+    missing = [header for header in wanted.values() if header.lower() not in columns]
     if missing:
         raise SheetErrors([f"{sheet_name}: column(s) not found in row {HEADER_ROW}: {', '.join(missing)}"])
 
     rows = []
     for row in range(FIRST_DATA_ROW, sheet.max_row + 1):
-        values = {key: clean(sheet.cell(row, columns[header]).value) for key, header in wanted.items()}
+        values = {key: clean(sheet.cell(row, columns[header.lower()]).value) for key, header in wanted.items()}
         if any(value is not None for value in values.values()):
             rows.append((row, values))
     return rows
@@ -215,6 +218,62 @@ def build_locations(workbook) -> list:
     return locations
 
 
+RE_GUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+
+
+def build_client(workbook) -> dict:
+    """
+    Data the client needs, from the "Internal ID (game)" columns:
+      locations: game source -> AP location ID
+                 a Save ID (GUID) for objects with a SavableEntityBase, "item:<itemID>" for scripted rewards
+      items:     AP item ID -> name, category, game itemID (null when not an inventory item), progressive data
+    Rows with an empty Internal ID are skipped (not supported by the client yet) and counted.
+    """
+    items = read_sheet(workbook, "Items", {
+        "name": "Item name", "category": "Category", "group": "Progressive group (weapons)",
+        "tier": "Tier", "ap_id": "AP ID", "game_id": "Internal ID (game)",
+    })
+    locations = read_sheet(workbook, "Locations", {
+        "name": "Location name", "ap_id": "AP ID", "game_id": "Internal ID (game)",
+    })
+    errors = []
+    item_game_ids = {v["game_id"] for _, v in items if v["game_id"]}
+
+    data_items, progressive = {}, {}
+    for row, v in items:
+        if not v["name"]:
+            continue
+        data_items[str(v["ap_id"])] = {
+            "name": v["name"], "category": v["category"], "game_id": v["game_id"],
+            "progressive_group": v["group"], "tier": v["tier"],
+        }
+        if v["group"] and v["tier"]:
+            progressive.setdefault(v["group"], {})[v["tier"]] = v["game_id"]
+    progressive = {group: [tiers[t] for t in sorted(tiers)] for group, tiers in progressive.items()}
+
+    data_locations, skipped = {}, []
+    for row, v in locations:
+        if not v["name"]:
+            continue
+        game_id = v["game_id"]
+        if not game_id:
+            skipped.append(v["name"])
+            continue
+        where = f"Locations row {row} ({v['name']})"
+        if game_id.startswith("item:"):
+            if game_id[5:] not in item_game_ids:
+                errors.append(f"{where}: '{game_id}' refers to an item ID that no item uses in the Items sheet")
+        elif not RE_GUID.match(game_id):
+            errors.append(f"{where}: Internal ID must be a Save ID (GUID) or 'item:<itemID>', got {game_id!r}")
+        if game_id in data_locations:
+            errors.append(f"{where}: Internal ID {game_id!r} already used by AP location {data_locations[game_id]}")
+        data_locations[game_id] = v["ap_id"]
+
+    if errors:
+        raise SheetErrors(errors)
+    return {"locations": data_locations, "items": data_items, "progressive": progressive, "_skipped": skipped}
+
+
 def header(source: Path, kind: str) -> list:
     return [
         f"# AUTO-GENERATED by spreadsheet_to_table.py from {source.name} on {date.today().isoformat()}.",
@@ -280,7 +339,7 @@ def write_locations(locations, source: Path) -> str:
 def main():
     parser = argparse.ArgumentParser(description="Generates ItemTable.py or LocationTable.py from the cvbc spreadsheet.")
     parser.add_argument("spreadsheet", type=Path, help="path to inventory_cvbc.xlsx")
-    parser.add_argument("table", choices=["items", "locations"], type=str.lower, help="which table to generate")
+    parser.add_argument("table", choices=["items", "locations", "client"], type=str.lower, help="which table to generate")
     args = parser.parse_args()
 
     if not args.spreadsheet.is_file():
@@ -292,9 +351,17 @@ def main():
         if args.table == "items":
             rows = build_items(workbook)
             content, file_name = write_items(rows, args.spreadsheet), "ItemTable.py"
-        else:
+        elif args.table == "locations":
             rows = build_locations(workbook)
             content, file_name = write_locations(rows, args.spreadsheet), "LocationTable.py"
+        else:
+            data = build_client(workbook)
+            skipped = data.pop("_skipped")
+            data = {"source": args.spreadsheet.name, "generated": date.today().isoformat(), **data}
+            content, file_name = json.dumps(data, indent=1, ensure_ascii=False) + "\n", "cvbc_data.json"
+            rows = data["locations"]
+            if skipped:
+                print(f"{len(skipped)} location(s) without Internal ID, not handled by the client yet (e.g. {skipped[0]})")
     except SheetErrors as error:
         problems = error.args[0]
         print(f"{len(problems)} problem(s) found, nothing was written:", file=sys.stderr)

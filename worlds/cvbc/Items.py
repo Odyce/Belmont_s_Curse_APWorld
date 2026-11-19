@@ -80,9 +80,21 @@ prg_virtues = {
     'Tarot : The Self'
 } ## Note: A safekeep that checks the names of these items in the original table is a good idea in case of renaming/typo in the spreadsheet
 
+## Beta: the client doesn't handle the Virtues yet, so their locations always keep them
+beta_vanilla_items = {
+    'Virtue of Courage',
+    'Virtue of Temperance',
+    'Virtue of Justice',
+    'Virtue of Prudence',
+}
+
 def must_stay_vanilla(world: "CBCWorld", name, data) -> bool:
     options = world.options
     item = data.vanilla_item
+
+    ## Once again, the virtues must be disabled for the first beta realease
+    if item in beta_vanilla_items:
+        return True
 
     if item in prg_virtues:
         if options.progressive_virtues and options.randomise_tarot_cards:

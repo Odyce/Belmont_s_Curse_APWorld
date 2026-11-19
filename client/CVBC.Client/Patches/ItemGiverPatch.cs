@@ -9,7 +9,14 @@ namespace CVBC.Client.Patches;
 public static class ItemGiverPatch
 {
     static void Prefix(ItemGiver __instance)
+        => Safe.Run("ItemGiverPatch.Prefix", () => PrefixBody(__instance));
+    private static void PrefixBody(ItemGiver __instance)
     {
+        // Next two lines are a safety measure in case something goes wrong in AcquisitionPatch
+        CheckTracker.DisplayOriginalId = null;
+        CheckTracker.DisplayReplacement = null;
+
+
         var savable = __instance.GetComponentInParent<SavableEntityBase>();
 
         // Check if the item is an item in a chest like it's supposed to be in this case
@@ -30,7 +37,5 @@ public static class ItemGiverPatch
     }
 
     static void Postfix()
-    {
-        CheckTracker.PendingSavedId = null;
-    }
+        => Safe.Run("ItemGiverPatch.Postfix", () => CheckTracker.PendingSavedId = null);
 }

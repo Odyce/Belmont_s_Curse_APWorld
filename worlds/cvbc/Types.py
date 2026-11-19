@@ -11,6 +11,9 @@ from BaseClasses import Location, Item, ItemClassification
 ## The use of this variable is to reduce possible human error when typing
 GAME_NAME = "Castlevania: Belmont's Curse"
 
+## Must match Plugin.Version in the client
+WORLD_VERSION = "0.1.0"
+
 # These 2 make it so that the generic Location and Item types are more specific for your game
 ## I obviously changed them to fit the game and switched their order so Item comes first, to keep it consistent
 class C_BC_Item(Item):

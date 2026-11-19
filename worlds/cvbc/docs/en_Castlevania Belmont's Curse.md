@@ -1,25 +1,40 @@
-# This is where your game name would be!
+# Castlevania: Belmont's Curse
 
 ## Where is the options page?
-
-Here is where you put the instructions on how to get to the options page. What is currently there should work and direct the player
-your game/player-options which is the normal page for options. Really only change this to spice it up or if something weir is happening
 
 The [player options page for this game](../player-options) contains all the options you need to configure and export a
 config file.
 
 ## What does randomization do to this game?
 
-Here you put all the items you are randomizing! You could include future goals or you could only put whats actually possible.
-The world is your oyster.
-And by world I mean these 3 lines of text.
+Almost everything Rose can pick up becomes a check, which can hold an item for any player of the multiworld:
+
+- Chests (silver and gold)
+- Experience statues
+- ATK and DEF books
+- Brave and Wise Heart fragments
+- Clues
+- Boss rewards, both on defeat and on absorption
+- The starting weapon, relic, clue and tarot card
+
+Each item category can be shuffled or kept vanilla from the YAML: Relics, Weapons, Clues, Tarot Cards, Augmentations, Key Items & Skills and EXP Statues. A location is never removed: when a category is kept vanilla, its locations stay and give their vanilla item.
+
+The goal is one of the three endings of the game: Bad, Neutral or True Ending.
+
+In v0.1.0, the Works of Mercy, the four Virtues and the First Fight with Death always stay vanilla.
 
 ## Which items can be in another player's world?
 
-This section is useful for if your game has items that will always be local. I can't think of any games as an example but I know they exist
+Every item of a shuffled category. The Works of Mercy upgrades, the four Virtues and "The Shadow Confronted" always stay in your own world, at their vanilla place, in v0.1.0.
 
 ## When the player receives an item, what happens?
 
-Here you can tell the player what it will look like when you receive an item in game. This is really nice cause it helps people figure out if
-they actually are receiving items the first time they set up the game. Also nice for explaining that really funny/cool/quirky system you
-put into your game that only a few people will see but youre really proud of.
+- **Inventory items** (weapons, relics, tarot cards, skills, key items): the game's own acquisition card is shown. If a menu is open, the card waits until it is closed.
+- **Augmentations and experience**: Brave and Wise Heart fragments, books and experience are applied directly to Rose's stats. Fragments still merge by four, like in the vanilla game.
+- **Clues**: added to your codex, without a card.
+
+When Rose finds an item for another player, or an item that has no card in the game, an Archipelago card is shown instead, with the item name, who it is for and which game it belongs to.
+
+## A little quirk
+
+**Jeanne d'Arc** and **Aliénor d'Aquitaine** keep their French names everywhere in this world.
