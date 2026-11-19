@@ -141,6 +141,7 @@ public static class ItemSync
         if (manager == null)
             return;
         
+        Dlc.SendFreeCheckIfNeeded();
         NeedsSync = false;
 
         var received = APClient.Session.Items.AllItemsReceived.ToArray();
@@ -172,6 +173,10 @@ public static class ItemSync
             }
 
             if (gameId == null)
+                continue;
+            
+            // Without the DLC, the game would take the relic back anyway
+            if (gameId == Dlc.FamilysGraveId && Dlc.OwnsFamilysGrave() == false)
                 continue;
             
             ItemData item = Give(manager, gameId, (string)data["name"]);
